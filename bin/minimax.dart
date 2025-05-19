@@ -1,81 +1,95 @@
-import 'dart:math';
 import 'grid.dart';
 import 'utils.dart';
 
 class MinimaxAI {
   final Grid grid;
   final int maxDepth;
+  final Cell aiPlayer = Cell.player2;
+  final Cell humanPlayer = Cell.player1;
 
-  MinimaxAI(this.grid, {this.maxDepth = 5}); // derinlik ayarlanabilir
+  MinimaxAI(this.grid, {this.maxDepth = 4});
 
   void makeBestMove() {
     int bestScore = -999999;
-    int? bestRow;
-    int? bestCol;
+    int bestRow = -1;
+    int bestCol = -1;
 
-    for (int i = 0; i < grid.size; i++) {
-      for (int j = 0; j < grid.size; j++) {
-        if (grid.isValidMove(i, j)) {
-          grid.placeMove(i, j, Cell.player2);
-          int score = minimax(grid, 0, false);
-          grid.board[i][j] = Cell.empty;
+    for (int row = 0; row < grid.size; row++) {
+      for (int col = 0; col < grid.size; col++) {
+        if (grid.isEmpty(row, col)) {
+          Grid cloned = grid.clone();
+          cloned.place(row, col, aiPlayer);
+
+          int score = minimax(cloned, 1, false, -999999, 999999);
 
           if (score > bestScore) {
             bestScore = score;
-            bestRow = i;
-            bestCol = j;
+            bestRow = row;
+            bestCol = col;
           }
         }
       }
     }
 
-    if (bestRow != null && bestCol != null) {
-      grid.placeMove(bestRow, bestCol, Cell.player2);
-      print("AI $bestRow, $bestCol hamlesini yaptı (skor: $bestScore)");
+    if (bestRow != -1 && bestCol != -1) {
+      grid.place(bestRow, bestCol, aiPlayer);
+      print('AI played at ($bestRow, $bestCol)');
     }
   }
 
-  int minimax(Grid board, int depth, bool isMaximizingPlayer) {
-    if (depth >= maxDepth || _isGameOver(board)) {
-      return _evaluate(board);
+  int minimax(Grid board, int depth, bool isMaximizing, int alpha, int beta) {
+    if (depth == maxDepth || board.isFull()) {
+      return evaluate(board);
     }
 
-    int bestScore = isMaximizingPlayer ? -999999 : 999999;
+    if (isMaximizing) {
+      int maxEval = -999999;
 
-    for (int i = 0; i < board.size; i++) {
-      for (int j = 0; j < board.size; j++) {
-        if (board.isValidMove(i, j)) {
-          Cell currentPlayer = isMaximizingPlayer ? Cell.player2 : Cell.player1;
-          board.placeMove(i, j, currentPlayer);
+      for (int row = 0; row < board.size; row++) {
+        for (int col = 0; col < board.size; col++) {
+          if (board.isEmpty(row, col)) {
+            Grid cloned = board.clone();
+            cloned.place(row, col, aiPlayer);
 
-          int score = minimax(board, depth + 1, !isMaximizingPlayer);
+            int eval = minimax(cloned, depth + 1, false, alpha, beta);
+            maxEval = maxEval > eval ? maxEval : eval;
+            alpha = alpha > eval ? alpha : eval;
 
-          board.board[i][j] = Cell.empty;
-
-          if (isMaximizingPlayer) {
-            bestScore = max(bestScore, score);
-          } else {
-            bestScore = min(bestScore, score);
+            if (beta <= alpha) {
+              return maxEval; // pruning
+            }
           }
         }
       }
-    }
 
-    return bestScore;
-  }
+      return maxEval;
+    } else {
+      int minEval = 999999;
 
-  int _evaluate(Grid board) {
-    int aiScore = Utils.calculateScore(board, Cell.player2);
-    int playerScore = Utils.calculateScore(board, Cell.player1);
-    return aiScore - playerScore;
-  }
+      for (int row = 0; row < board.size; row++) {
+        for (int col = 0; col < board.size; col++) {
+          if (board.isEmpty(row, col)) {
+            Grid cloned = board.clone();
+            cloned.place(row, col, humanPlayer);
 
-  bool _isGameOver(Grid board) {
-    for (var row in board.board) {
-      for (var cell in row) {
-        if (cell == Cell.empty) return false;
+            int eval = minimax(cloned, depth + 1, true, alpha, beta);
+            minEval = minEval < eval ? minEval : eval;
+            beta = beta < eval ? beta : eval;
+
+            if (beta <= alpha) {
+              return minEval; // pruning
+            }
+          }
+        }
       }
+
+      return minEval;
     }
-    return true;
+  }
+
+  int evaluate(Grid board) {
+    int aiScore = Utils.calculateScore(board, aiPlayer);
+    int humanScore = Utils.calculateScore(board, humanPlayer);
+    return aiScore - humanScore;
   }
 }
