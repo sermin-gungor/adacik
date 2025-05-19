@@ -5,7 +5,7 @@ enum Cell { empty, player1, player2, obstacle }
 
 class Grid {
   final int size = 5;
-  final int obstacleCount = 4;
+  final int obstacleCount = 5;
   late List<List<Cell>> board;
 
   Grid() {

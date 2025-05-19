@@ -22,7 +22,8 @@ class GameController {
         _playerMove();
       } else {
         print("Bilgisayar düşünüyor...");
-        ai.makeMove();
+        ai.makeBestMove(); 
+();
       }
 
       isPlayerTurn = !isPlayerTurn;
