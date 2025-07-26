@@ -1,49 +1,49 @@
 import 'dart:math';
 
-/// Oyun hücresi türleri
-enum Cell { empty, player1, player2, obstacle }
+//Oyun hücresi tanımlar
+enum Cell { empty, player1, player2, obstacle } 
 
 class Grid {
-  final int size = 5;
-  final int obstacleCount = 5;
-  late List<List<Cell>> board;
+  final int size = 7; // Tahta boyutu
+  final int obstacleCount = 15; // Engellerin sayısı
+  late List<List<Cell>> board; //oyuncuların hamlelerini tutan liste
 
-  // Normal constructor
-  Grid() {
-    board = List.generate(size, (_) => List.filled(size, Cell.empty));
-    _placeObstacles();
+  //normal constructor
+  Grid() {//tahtayı başlat ve engelleri yerleştir
+    board = List.generate(size, (_) => List.filled(size, Cell.empty));//her hücre başlangıçta boş
+    _placeObstacles();//engelleri yerleştir
   }
 
-  // Internal constructor (klonlama için kullanılır)
-  Grid._internal() {
+  //internal constructor (klonlama için kullanılır)
+  Grid._internal() {//engelleri yerleştirilmemiş boş bir tahta oluşturur
     board = List.generate(size, (_) => List.filled(size, Cell.empty));
   }
 
-  /// Klonlanmış bir Grid döndürür
+  //klonlanmış bir grid döndürür
   Grid clone() {
-    Grid newGrid = Grid._internal();
+    Grid newGrid = Grid._internal();//yeni bir boş grid oluştur
     for (int i = 0; i < size; i++) {
       for (int j = 0; j < size; j++) {
-        newGrid.board[i][j] = board[i][j];
+        newGrid.board[i][j] = board[i][j];//mevcut grid'in hücrelerini yeni grid'e kopyala
       }
     }
     return newGrid;
   }
 
-  /// Belirtilen hücre boş mu?
+  //belirtilen hücre boş mu?
   bool isEmpty(int row, int col) {
     return board[row][col] == Cell.empty;
   }
 
-  /// Tüm hücreler dolu mu?
+  //tüm hücreler dolu mu?
   bool isFull() {
     for (var row in board) {
-      if (row.contains(Cell.empty)) return false;
+      if (row.contains(Cell.empty)) return false;//eğer herhangi bir hücre boşsa, tahta dolu değildir
     }
     return true;
   }
 
-  /// Geçerli hamle mi?
+  //geçerli hamle mi?
   bool isValidMove(int row, int col) {
     return row >= 0 &&
         col >= 0 &&
@@ -52,14 +52,13 @@ class Grid {
         board[row][col] == Cell.empty;
   }
 
-  /// Belirtilen hücreye oyuncu yerleştir
-  void placeMove(int row, int col, Cell player) {
+  void placeMove(int row, int col, Cell player) {//hamle geçerliyse oyuncunun hamlesini yerleştir
     if (isValidMove(row, col)) {
       board[row][col] = player;
     }
   }
 
-  /// AI için minimax algoritmasına uyumlu `place` alias'ı
+  //ai kodunda kullanmak için placeMove fonksiyonunun kısa ve kolay çağrılan bir takma adı
   void place(int row, int col, Cell player) {
     placeMove(row, col, player);
   }
@@ -67,32 +66,46 @@ class Grid {
   /// Rastgele engel yerleştir
   void _placeObstacles() {
     int placed = 0;
-    final rand = Random();
+    final rand = Random();//rastgele sayı üret
     while (placed < obstacleCount) {
       int row = rand.nextInt(size);
       int col = rand.nextInt(size);
-      if (board[row][col] == Cell.empty) {
+      if (board[row][col] == Cell.empty) {//boş hücreye engel yerleştir
         board[row][col] = Cell.obstacle;
         placed++;
       }
     }
   }
 
-  /// Tahtayı konsola yazdır
+  //tahtayı konsola numaralı şekilde yazdır
   void printBoard() {
-    for (var row in board) {
-      print(row.map((cell) {
-        switch (cell) {
+    //sütun numaralarını yaz
+    String columnNumbers = '   ';
+    for (int col = 0; col < size; col++) {
+      columnNumbers += '$col ';
+    }
+    print(columnNumbers);
+
+    //her satırı yaz
+    for (int row = 0; row < size; row++) {
+      String rowString = '$row  ';
+      for (int col = 0; col < size; col++) {
+        switch (board[row][col]) {
           case Cell.empty:
-            return '.';
+            rowString += '. ';//boş hücre için nokta kullan
+            break;
           case Cell.player1:
-            return 'X';
+            rowString += 'X ';//player1 için X kullan
+            break;
           case Cell.player2:
-            return 'O';
+            rowString += 'O ';//player2 için O kullan
+            break;
           case Cell.obstacle:
-            return '#';
+            rowString += '# ';//engel için # kullan
+            break;
         }
-      }).join(' '));
+      }
+      print(rowString);//her satırı yazdır
     }
   }
 }
